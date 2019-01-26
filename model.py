@@ -6,10 +6,11 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 height=5
-imax=37
+imax=38
 node_in=open("node_in.txt","r")
 hori_in=open("hori_in.txt","r")
 Mnode=node_in.readlines()
+Mhori=hori_in.readlines()
 OUTPUT=0
 roundCount=0
 # 初始化图，添加点与边
@@ -32,14 +33,32 @@ def Graph_init(G):
                 if ((i>0) and (Mnode[i-1][j]=='1')):
                     G.add_edge(node_num,node_num-imax,weight=1)
                     print("add edge:{}->{}".format(node_num,node_num-imax))
+                '''
                 for k in range(j,0,-1):
                     #k=k-1
                     if (Mnode[i][j-k]=='1'):
                         G.add_edge(node_num,node_num-k,weight=1)
                         print("add edge2:{}->{}".format(node_num,node_num-k))
+                '''
     #G.add_edges_from([(1,2),(1,3),(1,5),(4,5),(4,6),(5,6)])
     #nx.set_node_attributes(G, labels, 'labels')
     # G.add_edge(0,1,weight=80)
+def add_horizontal_weights():
+    j=0
+    for i in Mhori:        
+        Mhori[j]=Mhori[j].strip().split(' ')
+        print(Mhori[j])
+        src=Mhori[j][0]
+        dst=Mhori[j][1]
+        w=int(int(Mhori[j][2])*22/1.5)
+        #for src,dst,w in Mhori[j]:
+        #print("change_weight:{}->{}:{}".format(src,dst,w-1))
+        #change_weight(G,l2n(src),l2n(dst),w-1)
+        print("add_edge3:{}->{}:{}".format(src,dst,w))
+        G.add_edge(l2n(src),l2n(dst),weight=w)
+        j+=1
+    print(Mhori)
+    #exit()
     
 # 画出G的点、边及其属性
 def Graph_show(G):
@@ -50,7 +69,7 @@ def Graph_show(G):
     #print("roundCount:{} roundCount%10:{}".format(roundCount,(roundCount%10)))
     nx.draw(G,pos,with_labels=False,edge_labels=e_labels)
     nx.draw_networkx_edge_labels(G,pos,edge_labels=e_labels)
-    nx.draw_networkx(G, pos, labels=node_labels,font_size=12,node_color=colorlist)
+    nx.draw_networkx(G, pos, labels=node_labels,font_size=6,node_color=colorlist)
     G.edges(data=True)
     plt.ion()
     plt.savefig("test.png")
@@ -61,7 +80,10 @@ def Graph_show(G):
 
 # 修改已经存在的边的权重
 def change_weight(G,src,dst,change):
-    G[src][dst]['weight']=G[src][dst]['weight']+change
+    if (n2l(src)[0]!=n2l(dst)[0]):
+        G[src][dst]['weight']=G[src][dst]['weight']+change
+    #else:
+        #print("hori!!{}{}".format(n2l(src),n2l(dst)))    
 
 # 返回为list，格式[1]为各个点路径，[2]为总代价
 def get_shortest_path(G,src,dst):
@@ -91,7 +113,7 @@ def get_keys(dic,value):
     
 def letsgo(G,src,dst):
     global node_counts
-
+    #print("banjjjjjjjjjjjjjju:{}->{}".format(src,dst))
     # 清除上次的path
     if (G.nodes[l2n(src)]['path']!=[]):
         count=(G.nodes[l2n(src)]['count'])
@@ -154,6 +176,7 @@ if __name__ == "__main__":
     # 点的颜色
     node_colors=nx.get_node_attributes(G,'color')
     node_counts=nx.get_node_attributes(G,'count')
+    add_horizontal_weights()
     floor=['A','B','C','D','E']
     #Graph_show(G)
     for k in range(16):
@@ -169,7 +192,7 @@ if __name__ == "__main__":
                     p=floor[i]
                     p+=str(j)
                     #print(p)
-                    letsgo(G,p,'C0')
+                    letsgo(G,p,'C1')
     #letsgo(G,'A1','C0',5)
     #plt.ioff()
     #print(G[1][5])
