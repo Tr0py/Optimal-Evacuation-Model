@@ -6,16 +6,19 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 height=5
-imax=5
-node_in=open("test_in.txt","r")
+imax=37
+node_in=open("node_in.txt","r")
+hori_in=open("hori_in.txt","r")
 Mnode=node_in.readlines()
+OUTPUT=0
+roundCount=0
 # 初始化图，添加点与边
 def Graph_init(G):
     floor=['A','B','C','D','E']
     colors=['r','y','g','c','m']
 
     for i in range(height):
-        Mnode[i]=Mnode[i].strip().split(' ')
+        Mnode[i]=Mnode[i].strip().split('\t')
     print(Mnode)
 
     for i in range(height):
@@ -23,7 +26,7 @@ def Graph_init(G):
             print("i:{} j:{}".format(i,j))
             if (Mnode[i][j]=='1'):
                 node_num=i*imax+j
-                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=5)
+                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=200,path=[])
                 print("add node:{}".format(node_num))
                 colorlist.append(colors[i])
                 if ((i>0) and (Mnode[i-1][j]=='1')):
@@ -41,18 +44,20 @@ def Graph_init(G):
 # 画出G的点、边及其属性
 def Graph_show(G):
     e_labels = nx.get_edge_attributes(G,'weight')
+    global roundCount
+    #roundCount+=1
+    #print("roundCount:{}".format(roundCount))
+    #print("roundCount:{} roundCount%10:{}".format(roundCount,(roundCount%10)))
     nx.draw(G,pos,with_labels=False,edge_labels=e_labels)
     nx.draw_networkx_edge_labels(G,pos,edge_labels=e_labels)
     nx.draw_networkx(G, pos, labels=node_labels,font_size=12,node_color=colorlist)
     G.edges(data=True)
     plt.ion()
-    #plt.savefig("test.png")
+    plt.savefig("test.png")
     plt.show()
-    plt.pause(0.03)
+    plt.pause(0.3)
     #plt.close()
-    #print("nodes:", G.nodes())      #输出全部的节点： [1, 2, 3]
-    #print("edges:", G.edges())      #输出全部的边：[(2, 3)]
-    #print("number of edges:", G.number_of_edges())   #输出边的数量：1
+
 
 # 修改已经存在的边的权重
 def change_weight(G,src,dst,change):
@@ -85,7 +90,22 @@ def get_keys(dic,value):
             return k
     
 def letsgo(G,src,dst):
-    rate=0.5
+    global node_counts
+
+    # 清除上次的path
+    if (G.nodes[l2n(src)]['path']!=[]):
+        count=(G.nodes[l2n(src)]['count'])
+        leave=(G.nodes[l2n(src)]['path'][0])
+
+        for go in G.nodes[l2n(src)]['path']:
+            if (leave == go):
+                continue
+            #print("MINUS {}->{} by {}".format(n2l(leave),n2l(go),count))
+            change_weight(G,leave,go,-count)
+            leave=go
+            
+
+    rate=0.8
     #print(node_counts[1])
     #print(node_counts[l2n(src)])
     ret=get_shortest_path(G,l2n(src),l2n(dst))
@@ -107,15 +127,21 @@ def letsgo(G,src,dst):
     f.write('\n')
     temp=int(float(node_counts[l2n(src)])*rate)
     #print(rate)
+    
     node_counts[l2n(src)]=temp
-    print(node_counts[l2n(src)])
+    G.nodes[l2n(src)]['count']=temp
+    G.nodes[l2n(src)]['path']=ret[0]
+    #print(node_counts)
     #print(node_counts[l2n(src)])
-    Graph_show(G)
+    #e_labels = nx.get_edge_attributes(G,'weight')
+    #if (OUTPUT and (roundCount%3==0)):
+    #    Graph_show(G)
 
 
 
 if __name__ == "__main__":
     G=nx.Graph()
+    roundCount=0
     colorlist=[]
     Graph_init(G)
     f=open("out.txt","w")
@@ -128,26 +154,15 @@ if __name__ == "__main__":
     # 点的颜色
     node_colors=nx.get_node_attributes(G,'color')
     node_counts=nx.get_node_attributes(G,'count')
-    #print(node_counts[1])
-    '''
-    ret=get_shortest_path(G,l2n('A1'),l2n('C0'))
-    leave=l2n('A1')
-    #print(G[1][0]['weight']+1)
-    Graph_show(G)
-    for go in ret[0]:
-        if (leave == go):
-            continue
-        print(n2l(leave)+'->'+n2l(go))
-        #print(G[leave][go]['weight'])
-        change_weight(G,leave,go,1)
-        leave=go
-    print(ret[1])
-    '''
     floor=['A','B','C','D','E']
-    Graph_show(G)
-    for k in range(3):
-        node_counts=nx.get_node_attributes(G,'count')
-        print(node_counts)
+    #Graph_show(G)
+    for k in range(16):
+        if (k%3==0):
+            Graph_show(G)
+            node_counts=nx.get_node_attributes(G,'count')
+            node_path=nx.get_node_attributes(G,'path')
+        print("loop:{}\nnode_counts:{}\n".format(k,node_counts))
+        #print(node_path)
         for i in range(height):
             for j in range(imax):
                 if (Mnode[i][j]=='1'):
@@ -158,5 +173,6 @@ if __name__ == "__main__":
     #letsgo(G,'A1','C0',5)
     #plt.ioff()
     #print(G[1][5])
+    #Graph_show(G)
 
     
