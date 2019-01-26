@@ -75,10 +75,17 @@ def letsgo(G,src,dst):
     rate=0.5
     #print(node_counts[1])
     #print(node_counts[l2n(src)])
+    # 迪杰斯特拉
     ret=get_shortest_path(G,l2n(src),l2n(dst))
+    # 走的人数
     count=node_counts[l2n(src)]
+    # 下一波会游动的人数
+    temp=int(float(node_counts[l2n(src)])*rate)
     leave=l2n(src)
-    f.write(str(count)+' w:'+str(ret[1])+' path:'+n2l(leave))
+    node_counts[l2n(src)]=temp
+    print(node_counts[l2n(src)])
+    # 输出此次变化
+    f.write('total:'+str(count)+' fixed:'+str(count-temp)+' cost:'+str(ret[1])+' path:'+n2l(leave))
     
     for go in ret[0]:
         # 不会是第一个 A0->A0
@@ -92,10 +99,9 @@ def letsgo(G,src,dst):
         leave=go
     #print(ret[1])
     f.write('\n')
-    temp=int(float(node_counts[l2n(src)])*rate)
+    
     #print(rate)
-    node_counts[l2n(src)]=temp
-    print(node_counts[l2n(src)])
+
     #print(node_counts[l2n(src)])
     Graph_show(G)
 
@@ -104,7 +110,7 @@ def letsgo(G,src,dst):
 if __name__ == "__main__":
     G=nx.Graph()
     colorlist=[]
-    Graph_init(G)
+    Graph_init(G) 
     f=open("out.txt","w")
     pos=nx.get_node_attributes(G,'pos')
     # 边的权重
@@ -132,7 +138,7 @@ if __name__ == "__main__":
     '''
     floor=['A','B','C','D','E']
     Graph_show(G)
-    for k in range(3):
+    for k in range(2):
         node_counts=nx.get_node_attributes(G,'count')
         print(node_counts)
         for i in range(5):
