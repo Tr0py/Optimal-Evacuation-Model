@@ -5,22 +5,35 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+height=5
 imax=5
-k=0.6
+node_in=open("test_in.txt","r")
+Mnode=node_in.readlines()
 # 初始化图，添加点与边
 def Graph_init(G):
     floor=['A','B','C','D','E']
     colors=['r','y','g','c','m']
-    
-    for i in range(5):
+
+    for i in range(height):
+        Mnode[i]=Mnode[i].strip().split(' ')
+    print(Mnode)
+
+    for i in range(height):
         for j in range(imax):
-            node_num=i*imax+j
-            G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=5)
-            colorlist.append(colors[i])
-            if (i>0):
-                G.add_edge(node_num,node_num-imax,weight=1)
-            for k in range(j,0,-1):
-                G.add_edge(node_num,node_num-k,weight=1)
+            print("i:{} j:{}".format(i,j))
+            if (Mnode[i][j]=='1'):
+                node_num=i*imax+j
+                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=5)
+                print("add node:{}".format(node_num))
+                colorlist.append(colors[i])
+                if ((i>0) and (Mnode[i-1][j]=='1')):
+                    G.add_edge(node_num,node_num-imax,weight=1)
+                    print("add edge:{}->{}".format(node_num,node_num-imax))
+                for k in range(j,0,-1):
+                    #k=k-1
+                    if (Mnode[i][j-k]=='1'):
+                        G.add_edge(node_num,node_num-k,weight=1)
+                        print("add edge2:{}->{}".format(node_num,node_num-k))
     #G.add_edges_from([(1,2),(1,3),(1,5),(4,5),(4,6),(5,6)])
     #nx.set_node_attributes(G, labels, 'labels')
     # G.add_edge(0,1,weight=80)
@@ -135,12 +148,13 @@ if __name__ == "__main__":
     for k in range(3):
         node_counts=nx.get_node_attributes(G,'count')
         print(node_counts)
-        for i in range(5):
+        for i in range(height):
             for j in range(imax):
-                p=floor[i]
-                p+=str(j)
-                #print(p)
-                letsgo(G,p,'C0')
+                if (Mnode[i][j]=='1'):
+                    p=floor[i]
+                    p+=str(j)
+                    #print(p)
+                    letsgo(G,p,'C0')
     #letsgo(G,'A1','C0',5)
     #plt.ioff()
     #print(G[1][5])
