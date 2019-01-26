@@ -6,12 +6,14 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 height=5
-imax=38
+imax=41
 node_in=open("node_in.txt","r")
 hori_in=open("hori_in.txt","r")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
+dstlist=['A1','C38','C39','C40']
 OUTPUT=0
+NEEDOUT=1
 roundCount=0
 # 初始化图，添加点与边
 def Graph_init(G):
@@ -27,7 +29,7 @@ def Graph_init(G):
             print("i:{} j:{}".format(i,j))
             if (Mnode[i][j]=='1'):
                 node_num=i*imax+j
-                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=200,path=[])
+                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=200,path=[],dst=0)
                 print("add node:{}".format(node_num))
                 colorlist.append(colors[i])
                 if ((i>0) and (Mnode[i-1][j]=='1')):
@@ -111,10 +113,11 @@ def get_keys(dic,value):
         if v == value:
             return k
     
-def letsgo(G,src,dst):
+def letsgo(G,src,dstlist):
     global node_counts
     #print("banjjjjjjjjjjjjjju:{}->{}".format(src,dst))
     # 清除上次的path
+
     if (G.nodes[l2n(src)]['path']!=[]):
         count=(G.nodes[l2n(src)]['count'])
         leave=(G.nodes[l2n(src)]['path'][0])
@@ -130,11 +133,22 @@ def letsgo(G,src,dst):
     rate=0.8
     #print(node_counts[1])
     #print(node_counts[l2n(src)])
-    ret=get_shortest_path(G,l2n(src),l2n(dst))
+    minw=99999
+    minpath=[]
+    mindst=''
+    for dst in dstlist:
+        ret=get_shortest_path(G,l2n(src),l2n(dst))
+        if (ret[1]<minw):
+            minw=ret[1]
+            minpath=ret[0]
+            mindst=dst
+    ret[1]=minw
+    ret[0]=minpath
+    G.nodes[l2n(mindst)]['dst']+=1
     count=node_counts[l2n(src)]
     leave=l2n(src)
-    f.write(str(count)+' w:'+str(ret[1])+' path:'+n2l(leave))
-    
+    #f.write(str(count)+' w:'+str(ret[1])+' path:'+n2l(leave)+' dstCount:'+str(G.nodes[l2n(mindst)]['dst']))
+    f.write("moved:{} cost:{} dstCount:{} path:{}".format(count,ret[1],G.nodes[l2n(mindst)]['dst'],n2l(leave)))
     for go in ret[0]:
         # 不会是第一个 A0->A0
         if (leave == go):
@@ -180,7 +194,7 @@ if __name__ == "__main__":
     floor=['A','B','C','D','E']
     #Graph_show(G)
     for k in range(16):
-        if (k%3==0):
+        if (k%3==0 and NEEDOUT==1):
             Graph_show(G)
             node_counts=nx.get_node_attributes(G,'count')
             node_path=nx.get_node_attributes(G,'path')
@@ -192,7 +206,8 @@ if __name__ == "__main__":
                     p=floor[i]
                     p+=str(j)
                     #print(p)
-                    letsgo(G,p,'C1')
+                    letsgo(G,p,dstlist)
+    
     #letsgo(G,'A1','C0',5)
     #plt.ioff()
     #print(G[1][5])
