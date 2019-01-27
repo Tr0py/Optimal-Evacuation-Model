@@ -19,7 +19,7 @@ exit_count_out=open("test_exit_count.csv","w")
 cost_count_out=open("test_cost.csv","w")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
-dstlist=['A2','A6']
+dstlist=['A3']
 OUTPUT=0
 NEEDOUT=1
 roundCount=0
@@ -285,7 +285,7 @@ if __name__ == "__main__":
                 Graph_show(G)
                 node_counts=nx.get_node_attributes(G,'count')
                 node_path=nx.get_node_attributes(G,'path')
-            if (node_counts[1]<=1):
+            if (node_counts[0]<=1):
                 break
             #print("loop:{}\nnode_counts:{}\n".format(k,node_counts[1]))
             
