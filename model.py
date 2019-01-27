@@ -11,6 +11,7 @@ elevator_rate=int(15/6)
 node_in=open("node_in.txt","r")
 hori_in=open("hori_in.txt","r")
 exit_count_out=open("exit_count.csv","w")
+cost_count_out=open("cost.csv","w")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
 dstlist=['A1','C38','C39','C40']
@@ -34,7 +35,7 @@ def Graph_init(G,count_in):
             #print("i:{} j:{}".format(i,j))
             if (Mnode[i][j]=='1'):
                 node_num=i*imax+j
-                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=count_in,path=[],dst=0,nowdst='')
+                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=count_in,path=[],dst=0,nowdst='',cost=0,people=count_in)
                 node_sum+=1
                 
                 #print("add node:{}".format(node_num))
@@ -62,7 +63,7 @@ def add_horizontal_weights():
         #print(Mhori[j])
         src=Mhori[j][0]
         dst=Mhori[j][1]
-        w=int(int(Mhori[j][2])*22/1.5)
+        w=int(int(Mhori[j][2])*22/3)
         #for src,dst,w in Mhori[j]:
         #print("change_weight:{}->{}:{}".format(src,dst,w-1))
         #change_weight(G,l2n(src),l2n(dst),w-1)
@@ -183,12 +184,11 @@ def letsgo(G,src,dstlist):
     ret[0]=minpath
     count=node_counts[l2n(src)]
 
-    #fixed=int(count*(rate))
     
     G.nodes[l2n(mindst)]['dst']+=count
     #print("dst{}+{}".format(mindst,count))
     G.nodes[l2n(src)]['nowdst']=n2l(minpath[-1])
-    
+    G.nodes[l2n(src)]['cost']+=ret[1]
     leave=l2n(src)
     #f.write(str(count)+' w:'+str(ret[1])+' path:'+n2l(leave)+' dstCount:'+str(G.nodes[l2n(mindst)]['dst']))
     f.write("moved:{},cost:{},dstCount:{},path:{}".format(count,ret[1],G.nodes[l2n(mindst)]['dst'],n2l(leave)))
@@ -219,11 +219,14 @@ def letsgo(G,src,dstlist):
 
 
 if __name__ == "__main__":
+
+
     exit_count_out.write("EXIT")
     for dst in dstlist:
         exit_count_out.write(",{}".format(dst))
     exit_count_out.write("\n")
-    for ei in range(1,30,1):
+    first=1
+    for ei in range(1,10,1):
         print("BIGLOOP:{}....".format(ei))
         height=5
         imax=41
@@ -235,7 +238,6 @@ if __name__ == "__main__":
         Mhori=hori_in.readlines()
         dstlist=['A1','C38','C39','C40']
         OUTPUT=0
-        NEEDOUT=0
         roundCount=0
         # 纵向需要显示权重的边
         hori_edges=[]
@@ -246,6 +248,22 @@ if __name__ == "__main__":
         roundCount=0
         colorlist=[]
         Graph_init(G,ei+1)
+
+        '''
+        cost表头输出
+        '''
+        if (first):
+            floor=['A','B','C','D','E']
+            cost_count_out.write("NODE")
+            for i in range(height):
+                for j in range(imax):
+                    if (Mnode[i][j]=='1'):
+                        p=floor[i]
+                        p+=str(j)
+                        cost_count_out.write(",{}".format(p))
+            cost_count_out.write("\n")
+            first=0
+
         f=open("out.txt","w")
         pos=nx.get_node_attributes(G,'pos')
         # 边的权重
@@ -278,11 +296,39 @@ if __name__ == "__main__":
                         #print(p)
                         letsgo(G,p,dstlist)
 
+        '''
+        cost统计输出
+        '''
 
+        cost_count_out.write("NUM={}".format((ei+1)*81))
+        costlist=nx.get_node_attributes(G,'cost')
+        peoplelist=nx.get_node_attributes(G,'people')
+        # print(costlist)
+        # for i in costlist:
+        #     costlist[i]=int(costlist[i]/peoplelist[i])
+        #     #print("cost{}:{}".format(n2l(i),costlist[i]))
+        #     cost_count_out.write("{}:{}".format(n2l(i),costlist[i]))
+        
+        for i in range(height):
+            for j in range(imax):
+                if (Mnode[i][j]=='1'):
+                    floor=['A','B','C','D','E']
+                    p=floor[i]
+                    p+=str(j)
+                    num=l2n(p)
+                    costlist[num]=int(costlist[num]/peoplelist[num])
+                    cost_count_out.write(",{}".format(costlist[num]))
+        cost_count_out.write("\n")
+        
 
+        '''
+        exit负荷统计输出
+        '''
         exit_count_out.write("{}".format((ei+1)*81))
         for dst in dstlist:
             exit_count_out.write(",{}".format(G.nodes[l2n(dst)]['dst']))
+
+
         exit_count_out.write("\n")
     
     #letsgo(G,'A1','C0',5)
