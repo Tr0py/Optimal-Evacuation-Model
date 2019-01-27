@@ -7,34 +7,42 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 height=5
 imax=41
+elevator_rate=int(15/6)
 node_in=open("node_in.txt","r")
 hori_in=open("hori_in.txt","r")
+exit_count_out=open("exit_count.csv","w")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
 dstlist=['A1','C38','C39','C40']
 OUTPUT=0
-NEEDOUT=1
+NEEDOUT=0
 roundCount=0
+# 纵向需要显示权重的边
+hori_edges=[]
 # 初始化图，添加点与边
-def Graph_init(G):
+def Graph_init(G,count_in):
     floor=['A','B','C','D','E']
     colors=['r','y','g','c','m']
 
     for i in range(height):
         Mnode[i]=Mnode[i].strip().split('\t')
     print(Mnode)
-
+    global hori_edges
+    node_sum=0
     for i in range(height):
         for j in range(imax):
-            print("i:{} j:{}".format(i,j))
+            #print("i:{} j:{}".format(i,j))
             if (Mnode[i][j]=='1'):
                 node_num=i*imax+j
-                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=200,path=[],dst=0)
-                print("add node:{}".format(node_num))
+                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=count_in,path=[],dst=0,nowdst='')
+                node_sum+=1
+                
+                #print("add node:{}".format(node_num))
                 colorlist.append(colors[i])
                 if ((i>0) and (Mnode[i-1][j]=='1')):
                     G.add_edge(node_num,node_num-imax,weight=1)
-                    print("add edge:{}->{}".format(node_num,node_num-imax))
+                    hori_edges.append((node_num,node_num-imax))
+                    #print("add edge:{}->{}".format(node_num,node_num-imax))
                 '''
                 for k in range(j,0,-1):
                     #k=k-1
@@ -45,21 +53,23 @@ def Graph_init(G):
     #G.add_edges_from([(1,2),(1,3),(1,5),(4,5),(4,6),(5,6)])
     #nx.set_node_attributes(G, labels, 'labels')
     # G.add_edge(0,1,weight=80)
+    print("{}".format(node_sum))
+
 def add_horizontal_weights():
     j=0
     for i in Mhori:        
         Mhori[j]=Mhori[j].strip().split(' ')
-        print(Mhori[j])
+        #print(Mhori[j])
         src=Mhori[j][0]
         dst=Mhori[j][1]
         w=int(int(Mhori[j][2])*22/1.5)
         #for src,dst,w in Mhori[j]:
         #print("change_weight:{}->{}:{}".format(src,dst,w-1))
         #change_weight(G,l2n(src),l2n(dst),w-1)
-        print("add_edge3:{}->{}:{}".format(src,dst,w))
+        #print("add_edge3:{}->{}:{}".format(src,dst,w))
         G.add_edge(l2n(src),l2n(dst),weight=w)
         j+=1
-    print(Mhori)
+    #print(Mhori)
     #exit()
     
 # 画出G的点、边及其属性
@@ -69,10 +79,29 @@ def Graph_show(G):
     #roundCount+=1
     #print("roundCount:{}".format(roundCount))
     #print("roundCount:{} roundCount%10:{}".format(roundCount,(roundCount%10)))
-    nx.draw(G,pos,with_labels=False,edge_labels=e_labels)
-    nx.draw_networkx_edge_labels(G,pos,edge_labels=e_labels)
+    plt.figure(1,figsize=(20,12))
+    nx.draw(G,pos)
+    print(e_labels)
+    vertical_labels={}
+    for a in e_labels:
+        #print(a)
+        
+        b=e_labels[a]
+        #print(a[0],a[1],b)
+        #Ax->Bx 纵向边
+        if (n2l(a[0])[0]!=n2l(a[1])[0]):
+            #print("1")
+            #print("add dict:{}->{}".format(n2l(a[0]),n2l(a[1])))
+            vertical_labels[a]=b
+    #print(vertical_labels)
+
+        #print("x:{}y:{}b:{}".format(a[0],a[1],b))
+    nx.draw_networkx_edge_labels(G,pos,edge_labels=vertical_labels)
+    
+    #nx.draw_networkx_edges(G,pos,edgelist=hori_edges)
     nx.draw_networkx(G, pos, labels=node_labels,font_size=6,node_color=colorlist)
     G.edges(data=True)
+    #plt.figure(figsize=(6, 6.5))
     plt.ion()
     plt.savefig("test.png")
     plt.show()
@@ -118,6 +147,14 @@ def letsgo(G,src,dstlist):
     #print("banjjjjjjjjjjjjjju:{}->{}".format(src,dst))
     # 清除上次的path
 
+    #清除dstcount
+    nowdst=G.nodes[l2n(src)]['nowdst']
+    if (nowdst!=''):
+        count=node_counts[l2n(src)]
+        #print("nowdst:{} dstcount:{} count:{}".format(nowdst,G.nodes[l2n(nowdst)]['dst'],-count))
+        G.nodes[l2n(nowdst)]['dst']-=count
+        #print("nowdst:{} dstcount:{}".format(nowdst,G.nodes[l2n(nowdst)]['dst']))
+
     if (G.nodes[l2n(src)]['path']!=[]):
         count=(G.nodes[l2n(src)]['count'])
         leave=(G.nodes[l2n(src)]['path'][0])
@@ -144,11 +181,17 @@ def letsgo(G,src,dstlist):
             mindst=dst
     ret[1]=minw
     ret[0]=minpath
-    G.nodes[l2n(mindst)]['dst']+=1
     count=node_counts[l2n(src)]
+
+    #fixed=int(count*(rate))
+    
+    G.nodes[l2n(mindst)]['dst']+=count
+    #print("dst{}+{}".format(mindst,count))
+    G.nodes[l2n(src)]['nowdst']=n2l(minpath[-1])
+    
     leave=l2n(src)
     #f.write(str(count)+' w:'+str(ret[1])+' path:'+n2l(leave)+' dstCount:'+str(G.nodes[l2n(mindst)]['dst']))
-    f.write("moved:{} cost:{} dstCount:{} path:{}".format(count,ret[1],G.nodes[l2n(mindst)]['dst'],n2l(leave)))
+    f.write("moved:{},cost:{},dstCount:{},path:{}".format(count,ret[1],G.nodes[l2n(mindst)]['dst'],n2l(leave)))
     for go in ret[0]:
         # 不会是第一个 A0->A0
         if (leave == go):
@@ -156,7 +199,7 @@ def letsgo(G,src,dstlist):
         #f.write(n2l(leave)+'->'+n2l(go))
         f.write('->'+n2l(go))
         #print(G[leave][go]['weight'])
-        change_weight(G,leave,go,count)
+        change_weight(G,leave,go,count*elevator_rate)
         #print()
         leave=go
     #print(ret[1])
@@ -176,41 +219,73 @@ def letsgo(G,src,dstlist):
 
 
 if __name__ == "__main__":
-    G=nx.Graph()
-    roundCount=0
-    colorlist=[]
-    Graph_init(G)
-    f=open("out.txt","w")
-    pos=nx.get_node_attributes(G,'pos')
-    # 边的权重
-    e_labels = nx.get_edge_attributes(G,'weight')
-    # 点的标记
-    node_labels=nx.get_node_attributes(G,'label')
-    #node_label_list=
-    # 点的颜色
-    node_colors=nx.get_node_attributes(G,'color')
-    node_counts=nx.get_node_attributes(G,'count')
-    add_horizontal_weights()
-    floor=['A','B','C','D','E']
-    #Graph_show(G)
-    for k in range(16):
-        if (k%3==0 and NEEDOUT==1):
-            Graph_show(G)
-            node_counts=nx.get_node_attributes(G,'count')
-            node_path=nx.get_node_attributes(G,'path')
-        print("loop:{}\nnode_counts:{}\n".format(k,node_counts))
-        #print(node_path)
-        for i in range(height):
-            for j in range(imax):
-                if (Mnode[i][j]=='1'):
-                    p=floor[i]
-                    p+=str(j)
-                    #print(p)
-                    letsgo(G,p,dstlist)
+    exit_count_out.write("EXIT")
+    for dst in dstlist:
+        exit_count_out.write(",{}".format(dst))
+    exit_count_out.write("\n")
+    for ei in range(1,30,1):
+        print("BIGLOOP:{}....".format(ei))
+        height=5
+        imax=41
+        elevator_rate=int(15/6)
+        node_in=open("node_in.txt","r")
+        hori_in=open("hori_in.txt","r")
+        #exit_count_out=open("exit_count.csv","w+")
+        Mnode=node_in.readlines()
+        Mhori=hori_in.readlines()
+        dstlist=['A1','C38','C39','C40']
+        OUTPUT=0
+        NEEDOUT=0
+        roundCount=0
+        # 纵向需要显示权重的边
+        hori_edges=[]
+
+
+
+        G=nx.Graph()
+        roundCount=0
+        colorlist=[]
+        Graph_init(G,ei+1)
+        f=open("out.txt","w")
+        pos=nx.get_node_attributes(G,'pos')
+        # 边的权重
+        e_labels = nx.get_edge_attributes(G,'weight')
+        # 点的标记
+        node_labels=nx.get_node_attributes(G,'label')
+        #node_label_list=
+        # 点的颜色
+        node_colors=nx.get_node_attributes(G,'color')
+        node_counts=nx.get_node_attributes(G,'count')
+        add_horizontal_weights()
+        floor=['A','B','C','D','E']
+        #Graph_show(G)
+        for k in range(15):
+            
+            if (k%3==0 and NEEDOUT==1):
+                Graph_show(G)
+                node_counts=nx.get_node_attributes(G,'count')
+                node_path=nx.get_node_attributes(G,'path')
+            if (node_counts[1]<=1):
+                break
+            #print("loop:{}\nnode_counts:{}\n".format(k,node_counts[1]))
+            
+            #print(node_path)
+            for i in range(height):
+                for j in range(imax):
+                    if (Mnode[i][j]=='1'):
+                        p=floor[i]
+                        p+=str(j)
+                        #print(p)
+                        letsgo(G,p,dstlist)
+
+
+
+        exit_count_out.write("{}".format((ei+1)*81))
+        for dst in dstlist:
+            exit_count_out.write(",{}".format(G.nodes[l2n(dst)]['dst']))
+        exit_count_out.write("\n")
     
     #letsgo(G,'A1','C0',5)
     #plt.ioff()
     #print(G[1][5])
     #Graph_show(G)
-
-    
