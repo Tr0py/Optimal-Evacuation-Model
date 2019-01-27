@@ -2,21 +2,26 @@
 
 # 美赛D题线路规划
 
+
+'''
+Demo branch
+'''
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-height=5
-imax=41
-elevator_rate=int(15/6)
-node_in=open("node_in.txt","r")
-hori_in=open("hori_in.txt","r")
-exit_count_out=open("exit_count.csv","w")
-cost_count_out=open("cost.csv","w")
+height=3
+imax=7
+elevator_rate=int(2)
+node_in=open("test_node_in.txt","r")
+hori_in=open("test_hori_in.txt","r")
+exit_count_out=open("test_exit_count.csv","w")
+cost_count_out=open("test_cost.csv","w")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
-dstlist=['A1','C38','C39','C40']
+dstlist=['A2','A6']
 OUTPUT=0
-NEEDOUT=0
+NEEDOUT=1
 roundCount=0
 # 纵向需要显示权重的边
 hori_edges=[]
@@ -26,13 +31,13 @@ def Graph_init(G,count_in):
     colors=['r','y','g','c','m']
 
     for i in range(height):
-        Mnode[i]=Mnode[i].strip().split('\t')
+        Mnode[i]=Mnode[i].strip().split(' ')
     print(Mnode)
     global hori_edges
     node_sum=0
     for i in range(height):
         for j in range(imax):
-            #print("i:{} j:{}".format(i,j))
+            print("i:{} j:{}".format(i,j))
             if (Mnode[i][j]=='1'):
                 node_num=i*imax+j
                 G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=count_in,path=[],dst=0,nowdst='',cost=0,people=count_in)
@@ -63,7 +68,7 @@ def add_horizontal_weights():
         #print(Mhori[j])
         src=Mhori[j][0]
         dst=Mhori[j][1]
-        w=int(int(Mhori[j][2])*22/3)
+        w=int(int(Mhori[j][2]))
         #for src,dst,w in Mhori[j]:
         #print("change_weight:{}->{}:{}".format(src,dst,w-1))
         #change_weight(G,l2n(src),l2n(dst),w-1)
@@ -80,7 +85,7 @@ def Graph_show(G):
     #roundCount+=1
     #print("roundCount:{}".format(roundCount))
     #print("roundCount:{} roundCount%10:{}".format(roundCount,(roundCount%10)))
-    plt.figure(1,figsize=(20,12))
+    plt.figure(1,figsize=(6,6))
     nx.draw(G,pos)
     print(e_labels)
     vertical_labels={}
@@ -97,10 +102,11 @@ def Graph_show(G):
     #print(vertical_labels)
 
         #print("x:{}y:{}b:{}".format(a[0],a[1],b))
-    nx.draw_networkx_edge_labels(G,pos,edge_labels=vertical_labels)
+    nx.draw_networkx_edge_labels(G,pos,edge_labels=e_labels)
+    nx.draw_networkx_edge_labels(G,pos,edge_labels=vertical_labels,font_color='r',edge_color='r')
     
     #nx.draw_networkx_edges(G,pos,edgelist=hori_edges)
-    nx.draw_networkx(G, pos, labels=node_labels,font_size=6,node_color=colorlist)
+    nx.draw_networkx(G, pos, labels=node_labels,font_size=10,node_color=colorlist)
     G.edges(data=True)
     #plt.figure(figsize=(6, 6.5))
     plt.ion()
@@ -226,18 +232,14 @@ if __name__ == "__main__":
         exit_count_out.write(",{}".format(dst))
     exit_count_out.write("\n")
     first=1
-    for ei in range(1,10,1):
+    for ei in range(20,21,1):
         print("BIGLOOP:{}....".format(ei))
-        height=5
-        imax=41
-        elevator_rate=int(15/6)
-        node_in=open("node_in.txt","r")
-        hori_in=open("hori_in.txt","r")
+        #elevator_rate=int(15/6)
+        node_in=open("test_node_in.txt","r")
+        hori_in=open("test_hori_in.txt","r")
         #exit_count_out=open("exit_count.csv","w+")
         Mnode=node_in.readlines()
         Mhori=hori_in.readlines()
-        dstlist=['A1','C38','C39','C40']
-        OUTPUT=0
         roundCount=0
         # 纵向需要显示权重的边
         hori_edges=[]
