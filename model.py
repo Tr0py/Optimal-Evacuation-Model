@@ -19,7 +19,7 @@ exit_count_out=open("test_exit_count.csv","w")
 cost_count_out=open("test_cost.csv","w")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
-dstlist=['A3']
+dstlist=['A4']
 OUTPUT=0
 NEEDOUT=1
 roundCount=0
@@ -43,7 +43,7 @@ def Graph_init(G,count_in):
                 G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=count_in,path=[],dst=0,nowdst='',cost=0,people=count_in)
                 node_sum+=1
                 
-                #print("add node:{}".format(node_num))
+                print("add node:{}".format(node_num))
                 colorlist.append(colors[i])
                 if ((i>0) and (Mnode[i-1][j]=='1')):
                     G.add_edge(node_num,node_num-imax,weight=1)
@@ -59,6 +59,7 @@ def Graph_init(G,count_in):
     #G.add_edges_from([(1,2),(1,3),(1,5),(4,5),(4,6),(5,6)])
     #nx.set_node_attributes(G, labels, 'labels')
     # G.add_edge(0,1,weight=80)
+    G.remove_edge(4,11)
     print("{}".format(node_sum))
 
 def add_horizontal_weights():
@@ -85,10 +86,11 @@ def Graph_show(G):
     #roundCount+=1
     #print("roundCount:{}".format(roundCount))
     #print("roundCount:{} roundCount%10:{}".format(roundCount,(roundCount%10)))
-    plt.figure(1,figsize=(6,6))
+    plt.figure(1,figsize=(7,2))
     nx.draw(G,pos)
     print(e_labels)
     vertical_labels={}
+    horizontal_labels={}
     for a in e_labels:
         #print(a)
         
@@ -99,12 +101,19 @@ def Graph_show(G):
             #print("1")
             #print("add dict:{}->{}".format(n2l(a[0]),n2l(a[1])))
             vertical_labels[a]=b
+        else:
+            horizontal_labels[a]=b
     #print(vertical_labels)
 
         #print("x:{}y:{}b:{}".format(a[0],a[1],b))
+    
+    '''
     nx.draw_networkx_edge_labels(G,pos,edge_labels=e_labels)
     nx.draw_networkx_edge_labels(G,pos,edge_labels=vertical_labels,font_color='r',edge_color='r')
-    
+    '''
+    nx.draw_networkx_edge_labels(G,pos,edge_labels=horizontal_labels)
+
+
     #nx.draw_networkx_edges(G,pos,edgelist=hori_edges)
     nx.draw_networkx(G, pos, labels=node_labels,font_size=10,node_color=colorlist)
     G.edges(data=True)
@@ -270,7 +279,7 @@ if __name__ == "__main__":
         pos=nx.get_node_attributes(G,'pos')
         # 边的权重
         e_labels = nx.get_edge_attributes(G,'weight')
-        # 点的标记
+        # 点的标记 
         node_labels=nx.get_node_attributes(G,'label')
         #node_label_list=
         # 点的颜色
@@ -281,7 +290,7 @@ if __name__ == "__main__":
         #Graph_show(G)
         for k in range(15):
             
-            if (k%3==0 and NEEDOUT==1):
+            if (k%3==1 and NEEDOUT==1):
                 Graph_show(G)
                 node_counts=nx.get_node_attributes(G,'count')
                 node_path=nx.get_node_attributes(G,'path')
@@ -332,7 +341,7 @@ if __name__ == "__main__":
 
 
         exit_count_out.write("\n")
-    
+    #print("{},{}".format(l2n('A4'),l2n('B4')))
     #letsgo(G,'A1','C0',5)
     #plt.ioff()
     #print(G[1][5])
