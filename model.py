@@ -2,12 +2,18 @@
 
 # 美赛D题线路规划
 
+'''
+正式测试分支 - 考虑电梯
+python3 model.py
+'''
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 height=5
-imax=41
-elevator_rate=int(15/6)
+imax=69
+stair_rate=15/6
+elevator_rate=10/15
 node_in=open("node_in.txt","r")
 hori_in=open("hori_in.txt","r")
 exit_count_out=open("exit_count.csv","w")
@@ -35,11 +41,21 @@ def Graph_init(G,count_in):
             #print("i:{} j:{}".format(i,j))
             if (Mnode[i][j]=='1'):
                 node_num=i*imax+j
-                G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=count_in,path=[],dst=0,nowdst='',cost=0,people=count_in)
+                if (j<=40):
+                    G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=count_in,path=[],dst=0,nowdst='',cost=0,people=count_in)
+                    colorlist.append(colors[i])
+                else:
+                    '''
+                    电梯部分
+                    '''
+                    G.add_node(node_num,pos=(j,i),label=(floor[i]+str(j)),color=i,count=1,path=[],dst=0,nowdst='',cost=0,people=1)
+                    colorlist.append('b')
+                
+                    
                 node_sum+=1
                 
-                #print("add node:{}".format(node_num))
-                colorlist.append(colors[i])
+                #print("add node:{}-{}-{}".format(node_num,floor[i]+str(j),(j,i)))
+                
                 if ((i>0) and (Mnode[i-1][j]=='1')):
                     G.add_edge(node_num,node_num-imax,weight=1)
                     hori_edges.append((node_num,node_num-imax))
@@ -51,6 +67,7 @@ def Graph_init(G,count_in):
                         G.add_edge(node_num,node_num-k,weight=1)
                         print("add edge2:{}->{}".format(node_num,node_num-k))
                 '''
+    #print(G.nodes())
     #G.add_edges_from([(1,2),(1,3),(1,5),(4,5),(4,6),(5,6)])
     #nx.set_node_attributes(G, labels, 'labels')
     # G.add_edge(0,1,weight=80)
@@ -58,6 +75,9 @@ def Graph_init(G,count_in):
 
 def add_horizontal_weights():
     j=0
+    #print(G.nodes())
+    lst=G.nodes()
+    lens=len(lst)
     for i in Mhori:        
         Mhori[j]=Mhori[j].strip().split(' ')
         #print(Mhori[j])
@@ -70,6 +90,14 @@ def add_horizontal_weights():
         #print("add_edge3:{}->{}:{}".format(src,dst,w))
         G.add_edge(l2n(src),l2n(dst),weight=w)
         j+=1
+        lst=G.nodes()
+        #print(G.nodes())
+        if (len(lst)!=lens):
+            #print()
+            
+            print("change_weight:{}->{}:{}".format(src,dst,w-1))
+            exit()
+    #print(G.nodes())
     #print(Mhori)
     #exit()
     
@@ -80,9 +108,10 @@ def Graph_show(G):
     #roundCount+=1
     #print("roundCount:{}".format(roundCount))
     #print("roundCount:{} roundCount%10:{}".format(roundCount,(roundCount%10)))
-    plt.figure(1,figsize=(20,12))
-    nx.draw(G,pos)
-    print(e_labels)
+    plt.figure(1,figsize=(30,12))
+    #print(G.nodes())
+    nx.draw(G,pos,nodelist=G.nodes())
+    #print(e_labels)
     vertical_labels={}
     for a in e_labels:
         #print(a)
@@ -103,10 +132,10 @@ def Graph_show(G):
     nx.draw_networkx(G, pos, labels=node_labels,font_size=6,node_color=colorlist)
     G.edges(data=True)
     #plt.figure(figsize=(6, 6.5))
-    plt.ion()
+    #plt.ion()
     plt.savefig("test.png")
-    plt.show()
-    plt.pause(0.3)
+    #plt.show()
+    #plt.pause(0.3)
     #plt.close()
 
 
@@ -151,6 +180,7 @@ def letsgo(G,src,dstlist):
     #清除dstcount
     nowdst=G.nodes[l2n(src)]['nowdst']
     if (nowdst!=''):
+
         count=node_counts[l2n(src)]
         #print("nowdst:{} dstcount:{} count:{}".format(nowdst,G.nodes[l2n(nowdst)]['dst'],-count))
         G.nodes[l2n(nowdst)]['dst']-=count
@@ -164,6 +194,14 @@ def letsgo(G,src,dstlist):
             if (leave == go):
                 continue
             #print("MINUS {}->{} by {}".format(n2l(leave),n2l(go),count))
+            
+            if (int(n2l(leave)[1:])>=40):
+                count=int(count*elevator_rate)
+                #print("MINUS {}->{} by {}".format(n2l(leave),n2l(go),count))
+            else:
+                count=count
+            
+            #count=count
             change_weight(G,leave,go,-count)
             leave=go
             
@@ -192,6 +230,9 @@ def letsgo(G,src,dstlist):
     leave=l2n(src)
     #f.write(str(count)+' w:'+str(ret[1])+' path:'+n2l(leave)+' dstCount:'+str(G.nodes[l2n(mindst)]['dst']))
     f.write("moved:{},cost:{},dstCount:{},path:{}".format(count,ret[1],G.nodes[l2n(mindst)]['dst'],n2l(leave)))
+    
+    #print(ret[0])
+
     for go in ret[0]:
         # 不会是第一个 A0->A0
         if (leave == go):
@@ -199,7 +240,10 @@ def letsgo(G,src,dstlist):
         #f.write(n2l(leave)+'->'+n2l(go))
         f.write('->'+n2l(go))
         #print(G[leave][go]['weight'])
-        change_weight(G,leave,go,count*elevator_rate)
+        if (int(n2l(leave)[1:])>=40):
+            change_weight(G,leave,go,int(count*elevator_rate))
+        else:
+            change_weight(G,leave,go,int(count*stair_rate))
         #print()
         leave=go
     #print(ret[1])
@@ -226,18 +270,14 @@ if __name__ == "__main__":
         exit_count_out.write(",{}".format(dst))
     exit_count_out.write("\n")
     first=1
-    for ei in range(1,10,1):
+    for ei in range(1,30,1):
         print("BIGLOOP:{}....".format(ei))
-        height=5
-        imax=41
-        elevator_rate=int(15/6)
         node_in=open("node_in.txt","r")
         hori_in=open("hori_in.txt","r")
         #exit_count_out=open("exit_count.csv","w+")
         Mnode=node_in.readlines()
         Mhori=hori_in.readlines()
         dstlist=['A1','C38','C39','C40']
-        OUTPUT=0
         roundCount=0
         # 纵向需要显示权重的边
         hori_edges=[]
@@ -248,7 +288,7 @@ if __name__ == "__main__":
         roundCount=0
         colorlist=[]
         Graph_init(G,ei+1)
-
+        
         '''
         cost表头输出
         '''
@@ -263,7 +303,7 @@ if __name__ == "__main__":
                         cost_count_out.write(",{}".format(p))
             cost_count_out.write("\n")
             first=0
-
+        
         f=open("out.txt","w")
         pos=nx.get_node_attributes(G,'pos')
         # 边的权重
@@ -274,9 +314,12 @@ if __name__ == "__main__":
         # 点的颜色
         node_colors=nx.get_node_attributes(G,'color')
         node_counts=nx.get_node_attributes(G,'count')
+        
         add_horizontal_weights()
+        
         floor=['A','B','C','D','E']
         #Graph_show(G)
+        
         for k in range(15):
             
             if (k%3==0 and NEEDOUT==1):
@@ -324,7 +367,7 @@ if __name__ == "__main__":
         '''
         exit负荷统计输出
         '''
-        exit_count_out.write("{}".format((ei+1)*81))
+        exit_count_out.write("TOTAL={}".format((ei+1)*81))
         for dst in dstlist:
             exit_count_out.write(",{}".format(G.nodes[l2n(dst)]['dst']))
 
