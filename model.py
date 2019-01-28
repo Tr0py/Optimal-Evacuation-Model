@@ -20,7 +20,7 @@ cost_count_out=open("test_cost.csv","w")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
 dstlist=['A4']
-global_count=1
+global_count=0
 OUTPUT=0
 NEEDOUT=1
 roundCount=0
@@ -294,7 +294,7 @@ if __name__ == "__main__":
         #Graph_show(G)
         for k in range(15):
             
-            if (k%3==1 and NEEDOUT==1):
+            if (k%3==0 and NEEDOUT==1):
                 Graph_show(G)
                 node_counts=nx.get_node_attributes(G,'count')
                 node_path=nx.get_node_attributes(G,'path')
