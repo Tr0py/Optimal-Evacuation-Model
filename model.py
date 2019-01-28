@@ -20,6 +20,7 @@ cost_count_out=open("test_cost.csv","w")
 Mnode=node_in.readlines()
 Mhori=hori_in.readlines()
 dstlist=['A4']
+global_count=1
 OUTPUT=0
 NEEDOUT=1
 roundCount=0
@@ -86,7 +87,7 @@ def Graph_show(G):
     #roundCount+=1
     #print("roundCount:{}".format(roundCount))
     #print("roundCount:{} roundCount%10:{}".format(roundCount,(roundCount%10)))
-    plt.figure(1,figsize=(7,2))
+    plt.figure(1,figsize=(3,3))
     nx.draw(G,pos)
     print(e_labels)
     vertical_labels={}
@@ -107,19 +108,22 @@ def Graph_show(G):
 
         #print("x:{}y:{}b:{}".format(a[0],a[1],b))
     
-    '''
+
     nx.draw_networkx_edge_labels(G,pos,edge_labels=e_labels)
     nx.draw_networkx_edge_labels(G,pos,edge_labels=vertical_labels,font_color='r',edge_color='r')
     '''
     nx.draw_networkx_edge_labels(G,pos,edge_labels=horizontal_labels)
-
+    '''
 
     #nx.draw_networkx_edges(G,pos,edgelist=hori_edges)
     nx.draw_networkx(G, pos, labels=node_labels,font_size=10,node_color=colorlist)
     G.edges(data=True)
     #plt.figure(figsize=(6, 6.5))
     plt.ion()
-    plt.savefig("test.png")
+    global global_count
+    filename="demo{}".format(global_count)
+    global_count+=3
+    plt.savefig(filename)
     plt.show()
     plt.pause(0.3)
     #plt.close()
@@ -179,7 +183,7 @@ def letsgo(G,src,dstlist):
             if (leave == go):
                 continue
             #print("MINUS {}->{} by {}".format(n2l(leave),n2l(go),count))
-            change_weight(G,leave,go,-count)
+            change_weight(G,leave,go,-count*2)
             leave=go
             
 
@@ -294,8 +298,8 @@ if __name__ == "__main__":
                 Graph_show(G)
                 node_counts=nx.get_node_attributes(G,'count')
                 node_path=nx.get_node_attributes(G,'path')
-            if (node_counts[0]<=1):
-                break
+            #if (node_counts[0]<=1):
+            #    break
             #print("loop:{}\nnode_counts:{}\n".format(k,node_counts[1]))
             
             #print(node_path)
