@@ -2,6 +2,11 @@
 
 # 美赛D题线路规划
 
+'''
+official branch.
+不考虑电梯的正常人模型
+python3 model.py
+'''
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -153,7 +158,7 @@ def letsgo(G,src,dstlist):
     if (nowdst!=''):
         count=node_counts[l2n(src)]
         #print("nowdst:{} dstcount:{} count:{}".format(nowdst,G.nodes[l2n(nowdst)]['dst'],-count))
-        G.nodes[l2n(nowdst)]['dst']-=count
+        G.nodes[l2n(nowdst)]['dst']-=count*elevator_rate
         #print("nowdst:{} dstcount:{}".format(nowdst,G.nodes[l2n(nowdst)]['dst']))
 
     if (G.nodes[l2n(src)]['path']!=[]):
@@ -226,7 +231,7 @@ if __name__ == "__main__":
         exit_count_out.write(",{}".format(dst))
     exit_count_out.write("\n")
     first=1
-    for ei in range(1,10,1):
+    for ei in range(1,30,1):
         print("BIGLOOP:{}....".format(ei))
         height=5
         imax=41
